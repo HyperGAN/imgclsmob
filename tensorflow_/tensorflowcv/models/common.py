@@ -12,6 +12,23 @@ import numpy as np
 import tensorflow as tf
 
 
+layers = {}
+def keras_layer(name, klass, *args, **opts):
+    opts["name"]=name
+
+    global layers
+    if name in layers:
+        return layers[name]
+    else:
+        layer = klass(*args, **opts)
+        layers[name] = layer
+        return layer
+
+
+def clear_keras_layers():
+    global layers
+    layers = {}
+
 def get_activation_layer(x,
                          activation,
                          name="activ"):
@@ -268,12 +285,12 @@ def avgpool2d(x,
         name=name)(x)
 
     if (strides[0] > 1) or (strides[1] > 1):
-        x = tf.keras.layers.AveragePooling2D(
+        x = keras_layer(name + "/stride", tf.keras.layers.AveragePooling2D,
             pool_size=1,
             strides=strides,
             padding="valid",
-            data_format=data_format,
-            name=name + "/stride")(x)
+            data_format=data_format
+        )(x)
     return x
 
 
@@ -338,7 +355,7 @@ def conv2d(x,
         x = tf.pad(x, paddings=paddings_tf)
 
     if groups == 1:
-        x = tf.keras.layers.Conv2D(
+        x = keras_layer(name, tf.keras.layers.Conv2D,
             filters=out_channels,
             kernel_size=kernel_size,
             strides=strides,
@@ -346,8 +363,7 @@ def conv2d(x,
             data_format=data_format,
             dilation_rate=dilation,
             use_bias=use_bias,
-            kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
-            name=name)(x)
+            kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0))(x)
     elif (groups == out_channels) and (out_channels == in_channels):
         assert (dilation[0] == 1) and (dilation[1] == 1)
         kernel = tf.get_variable(

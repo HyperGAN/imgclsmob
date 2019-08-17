@@ -8,7 +8,7 @@ __all__ = ['SqueezeNet', 'squeezenet_v1_0', 'squeezenet_v1_1', 'squeezeresnet_v1
 
 import os
 import tensorflow as tf
-from .common import conv2d, maxpool2d, is_channels_first, get_channel_axis, flatten
+from .common import conv2d, maxpool2d, is_channels_first, get_channel_axis, flatten, clear_keras_layers
 
 
 def fire_conv(x,
@@ -455,6 +455,7 @@ def _test():
             shape=(None, 3, 224, 224) if is_channels_first(data_format) else (None, 224, 224, 3),
             name="xx")
         y_net = net(x)
+        y_net2 = net(x) #reuse
 
         weight_count = np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])
         print("m={}, {}".format(model.__name__, weight_count))
@@ -473,6 +474,7 @@ def _test():
             y = sess.run(y_net, feed_dict={x: x_value})
             assert (y.shape == (1, 1000))
         tf.reset_default_graph()
+        clear_keras_layers()
 
 
 if __name__ == "__main__":
