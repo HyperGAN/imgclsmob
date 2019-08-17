@@ -7,7 +7,7 @@ __all__ = ['DarkNet', 'darknet_ref', 'darknet_tiny', 'darknet19']
 
 import os
 import tensorflow as tf
-from .common import conv2d, maxpool2d, conv1x1_block, conv3x3_block, is_channels_first, flatten
+from .common import conv2d, maxpool2d, conv1x1_block, conv3x3_block, get_channel_axis, is_channels_first, flatten, clear_keras_layers
 
 
 def dark_convYxY(x,
@@ -316,6 +316,7 @@ def _test():
             shape=(None, 3, 224, 224) if is_channels_first(data_format) else (None, 224, 224, 3),
             name="xx")
         y_net = net(x)
+        y_net2 = net(x) #reuse
 
         weight_count = np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])
         print("m={}, {}".format(model.__name__, weight_count))
@@ -333,6 +334,7 @@ def _test():
             y = sess.run(y_net, feed_dict={x: x_value})
             assert (y.shape == (1, 1000))
         tf.reset_default_graph()
+        clear_keras_layers()
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ __all__ = ['SqueezeNet', 'squeezenet_v1_0', 'squeezenet_v1_1', 'squeezeresnet_v1
 
 import os
 import tensorflow as tf
-from .common import conv2d, maxpool2d, is_channels_first, get_channel_axis, flatten, clear_keras_layers
+from .common import conv2d, maxpool2d, is_channels_first, get_channel_axis, flatten, keras_layer, clear_keras_layers
 
 
 def fire_conv(x,
@@ -201,6 +201,7 @@ class SqueezeNet(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(SqueezeNet, self).__init__(**kwargs)
@@ -213,6 +214,7 @@ class SqueezeNet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -262,6 +264,10 @@ class SqueezeNet(object):
                     data_format=self.data_format,
                     name="features/stage{}/unit{}".format(i + 1, j + 1))
                 in_channels = out_channels
+        if i + 1 == self.layer_index:
+            return x
+        if self.layer_index == -2:
+            return x
         x = tf.keras.layers.Dropout(
             rate=0.5,
             name="features/dropout")(
@@ -276,6 +282,8 @@ class SqueezeNet(object):
             data_format=self.data_format,
             name="output/final_conv")
         x = tf.nn.relu(x, name="output/final_activ")
+        if self.layer_index == -1:
+            return x
         x = tf.keras.layers.AveragePooling2D(
             pool_size=13,
             strides=1,

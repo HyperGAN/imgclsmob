@@ -11,7 +11,7 @@ __all__ = ['ShuffleNet', 'shufflenet_g1_w1', 'shufflenet_g2_w1', 'shufflenet_g3_
 import os
 import tensorflow as tf
 from .common import conv1x1, conv3x3, depthwise_conv3x3, batchnorm, channel_shuffle, maxpool2d, avgpool2d,\
-    is_channels_first, get_channel_axis, flatten
+    is_channels_first, get_channel_axis, flatten, keras_layer, clear_keras_layers
 
 
 def shuffle_unit(x,
@@ -264,9 +264,8 @@ class ShuffleNet(object):
         x = flatten(
             x=x,
             data_format=self.data_format)
-        x = tf.keras.layers.Dense(
-            units=self.classes,
-            name="output")(x)
+        x = keras_layer("output", tf.keras.layers.Dense,
+            units=self.classes)(x)
 
         return x
 
@@ -589,6 +588,7 @@ def _test():
             shape=(None, 3, 224, 224) if is_channels_first(data_format) else (None, 224, 224, 3),
             name="xx")
         y_net = net(x)
+        y_net2 = net(x) #reuse
 
         weight_count = np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])
         print("m={}, {}".format(model.__name__, weight_count))
@@ -614,6 +614,7 @@ def _test():
             y = sess.run(y_net, feed_dict={x: x_value})
             assert (y.shape == (1, 1000))
         tf.reset_default_graph()
+        clear_keras_layers()
 
 
 if __name__ == "__main__":

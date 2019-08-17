@@ -8,7 +8,7 @@ __all__ = ['AlexNet', 'alexnet', 'alexnetb']
 
 import os
 import tensorflow as tf
-from .common import maxpool2d, conv_block, is_channels_first, flatten
+from .common import conv2d, maxpool2d, is_channels_first, get_channel_axis, flatten, conv_block, keras_layer, clear_keras_layers
 
 
 def alex_conv(x,
@@ -96,13 +96,11 @@ def alex_dense(x,
         Resulted tensor.
     """
     assert (in_channels > 0)
-    x = tf.keras.layers.Dense(
-        units=out_channels,
-        name=name + "/fc")(x)
+    x = keras_layer(name + "/fc", tf.keras.layers.Dense,
+        units=out_channels)(x)
     x = tf.nn.relu(x, name=name + "/activ")
-    x = tf.keras.layers.Dropout(
-        rate=0.5,
-        name=name + "/dropout")(
+    x = keras_layer(name + "/dropout", tf.keras.layers.Dropout,
+        rate=0.5)(
         inputs=x,
         training=training)
     return x
@@ -148,9 +146,8 @@ def alex_output_block(x,
         out_channels=mid_channels,
         training=training,
         name=name + "/fc2")
-    x = tf.keras.layers.Dense(
-        units=classes,
-        name=name + "/fc3")(x)
+    x = keras_layer(name + "/fc3", tf.keras.layers.Dense,
+        units=classes)(x)
     return x
 
 
@@ -381,6 +378,7 @@ def _test():
             y = sess.run(y_net, feed_dict={x: x_value})
             assert (y.shape == (1, 1000))
         tf.reset_default_graph()
+        clear_keras_layers()
 
 
 if __name__ == "__main__":

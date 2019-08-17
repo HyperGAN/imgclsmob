@@ -148,11 +148,11 @@ def batchnorm(x,
     Tensor
         Resulted tensor.
     """
-    x = tf.keras.layers.BatchNormalization(
+    x = keras_layer(name, tf.keras.layers.BatchNormalization,
         axis=get_channel_axis(data_format),
         momentum=momentum,
         epsilon=epsilon,
-        name=name)(
+        )(
         inputs=x,
         training=training)
     return x
@@ -213,12 +213,11 @@ def maxpool2d(x,
         else:
             x = tf.pad(x, [[0, 0], list(padding), list(padding), [0, 0]], mode="REFLECT")
 
-    x = tf.keras.layers.MaxPooling2D(
+    x = keras_layer(name, tf.keras.layers.MaxPooling2D,
         pool_size=pool_size,
         strides=strides,
         padding="valid",
-        data_format=data_format,
-        name=name)(x)
+        data_format=data_format)(x)
     return x
 
 
@@ -277,12 +276,11 @@ def avgpool2d(x,
         else:
             x = tf.pad(x, [[0, 0], list(padding), list(padding), [0, 0]], mode="CONSTANT")
 
-    x = tf.keras.layers.AveragePooling2D(
+    x = keras_layer(name, tf.keras.layers.AveragePooling2D,
         pool_size=pool_size,
         strides=1,
         padding="valid",
-        data_format=data_format,
-        name=name)(x)
+        data_format=data_format)(x)
 
     if (strides[0] > 1) or (strides[1] > 1):
         x = keras_layer(name + "/stride", tf.keras.layers.AveragePooling2D,
@@ -366,10 +364,11 @@ def conv2d(x,
             kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0))(x)
     elif (groups == out_channels) and (out_channels == in_channels):
         assert (dilation[0] == 1) and (dilation[1] == 1)
-        kernel = tf.get_variable(
-            name=name + "/dw_kernel",
-            shape=kernel_size + (in_channels, 1),
-            initializer=tf.variance_scaling_initializer(2.0))
+        with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
+            kernel = tf.get_variable(
+                name="dw_kernel",
+                shape=kernel_size + (in_channels, 1),
+                initializer=tf.variance_scaling_initializer(2.0))
         x = tf.nn.depthwise_conv2d(
             input=x,
             filter=kernel,
@@ -391,7 +390,7 @@ def conv2d(x,
                 xi = x[:, gi * in_group_channels:(gi + 1) * in_group_channels, :, :]
             else:
                 xi = x[:, :, :, gi * in_group_channels:(gi + 1) * in_group_channels]
-            xi = tf.keras.layers.Conv2D(
+            xi = keras_layer(name + "/convgroup{}".format(gi + 1), tf.keras.layers.Conv2D,
                 filters=out_group_channels,
                 kernel_size=kernel_size,
                 strides=strides,
@@ -399,8 +398,7 @@ def conv2d(x,
                 data_format=data_format,
                 dilation_rate=dilation,
                 use_bias=use_bias,
-                kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
-                name=name + "/convgroup{}".format(gi + 1))(xi)
+                kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0))(xi)
             group_list.append(xi)
         x = tf.concat(group_list, axis=get_channel_axis(data_format), name=name + "/concat")
 
@@ -1267,11 +1265,10 @@ def se_block(x,
     mid_cannels = channels // reduction
     pool_size = x.shape[2:4] if is_channels_first(data_format) else x.shape[1:3]
 
-    w = tf.keras.layers.AveragePooling2D(
+    w = keras_layer(name + "/pool", tf.keras.layers.AveragePooling2D,
         pool_size=pool_size,
         strides=1,
-        data_format=data_format,
-        name=name + "/pool")(x)
+        data_format=data_format)(x)
     w = conv1x1(
         x=w,
         in_channels=channels,
