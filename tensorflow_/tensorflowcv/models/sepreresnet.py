@@ -125,6 +125,7 @@ class SEPreResNet(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(SEPreResNet, self).__init__(**kwargs)
@@ -137,6 +138,7 @@ class SEPreResNet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -179,6 +181,10 @@ class SEPreResNet(object):
                     data_format=self.data_format,
                     name="features/stage{}/unit{}".format(i + 1, j + 1))
                 in_channels = out_channels
+            if self.layer_index == i + 1:
+                return x
+        if self.layer_index == -2:
+            return x
         x = preres_activation(
             x=x,
             training=training,
@@ -189,6 +195,8 @@ class SEPreResNet(object):
             strides=1,
             data_format=self.data_format,
             name="features/final_pool")(x)
+        if self.layer_index == -1:
+            return x
 
         # x = tf.layers.flatten(x)
         x = flatten(

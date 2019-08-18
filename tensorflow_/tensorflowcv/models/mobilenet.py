@@ -93,6 +93,7 @@ class MobileNet(object):
                  in_size=(224, 224),
                  classes=1000,
                  data_format="channels_last",
+                 layer_index=0,
                  **kwargs):
         super(MobileNet, self).__init__(**kwargs)
         assert (data_format in ["channels_last", "channels_first"])
@@ -102,6 +103,7 @@ class MobileNet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -144,6 +146,10 @@ class MobileNet(object):
                     data_format=self.data_format,
                     name="features/stage{}/unit{}".format(i + 1, j + 1))
                 in_channels = out_channels
+            if self.layer_index == i + 1:
+                return x
+        if self.layer_index == -2:
+            return x
         x = tf.keras.layers.AveragePooling2D(
             pool_size=7,
             strides=1,
@@ -154,6 +160,8 @@ class MobileNet(object):
         x = flatten(
             x=x,
             data_format=self.data_format)
+        if self.layer_index == -1:
+            return x
         x = keras_layer("output", tf.keras.layers.Dense,
             units=self.classes)(x)
 

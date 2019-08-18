@@ -264,8 +264,8 @@ class SqueezeNet(object):
                     data_format=self.data_format,
                     name="features/stage{}/unit{}".format(i + 1, j + 1))
                 in_channels = out_channels
-        if i + 1 == self.layer_index:
-            return x
+            if i + 1 == self.layer_index:
+                return x
         if self.layer_index == -2:
             return x
         x = tf.keras.layers.Dropout(

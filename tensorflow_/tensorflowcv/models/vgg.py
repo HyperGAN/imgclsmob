@@ -124,6 +124,7 @@ class VGG(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(VGG, self).__init__(**kwargs)
@@ -135,6 +136,7 @@ class VGG(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -174,12 +176,16 @@ class VGG(object):
                 padding=0,
                 data_format=self.data_format,
                 name="features/stage{}/pool".format(i + 1))
+            if self.layer_index == i + 1:
+                return x
 
         in_channels = in_channels * 7 * 7
         # x = tf.reshape(x, [-1, in_channels])
         x = flatten(
             x=x,
             data_format=self.data_format)
+        if self.layer_index == -1:
+            return x
         x = vgg_output_block(
             x=x,
             in_channels=in_channels,

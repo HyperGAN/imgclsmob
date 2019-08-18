@@ -304,32 +304,32 @@ def channet_dws_conv_block(x,
         Resulted tensor.
     """
     x = dwconv3x3(
-        x=x,
-        in_channels=in_channels,
-        out_channels=in_channels,
-        strides=strides,
-        data_format=data_format,
-        name=name + '/dw_conv')
+            x=x,
+            in_channels=in_channels,
+            out_channels=in_channels,
+            strides=strides,
+            data_format=data_format,
+            name=name + '/dw_conv')
     x = channet_conv1x1(
-        x=x,
-        in_channels=in_channels,
-        out_channels=out_channels,
-        groups=groups,
-        dropout_rate=dropout_rate,
-        training=training,
-        data_format=data_format,
-        name=name + '/pw_conv')
+            x=x,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            groups=groups,
+            dropout_rate=dropout_rate,
+            training=training,
+            data_format=data_format,
+            name=name + '/pw_conv')
     return x
 
 
 def simple_group_block(x,
-                       channels,
-                       multi_blocks,
-                       groups,
-                       dropout_rate,
-                       training,
-                       data_format,
-                       name="simple_group_block"):
+        channels,
+        multi_blocks,
+        groups,
+        dropout_rate,
+        training,
+        data_format,
+        name="simple_group_block"):
     """
     ChannelNet specific block with a sequence of depthwise separable group convolution layers.
 
@@ -627,6 +627,7 @@ class ChannelNet(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(ChannelNet, self).__init__(**kwargs)
@@ -642,6 +643,7 @@ class ChannelNet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -683,6 +685,8 @@ class ChannelNet(object):
                 else:
                     in_channels = out_channels[-1]
 
+            if self.layer_index == i + 1:
+                return x
         x = tf.keras.layers.AveragePooling2D(
             pool_size=7,
             strides=1,
@@ -693,6 +697,8 @@ class ChannelNet(object):
         x = flatten(
             x=x,
             data_format=self.data_format)
+        if self.layer_index == -1:
+            return x
         x = keras_layer("output", tf.keras.layers.Dense,
             units=self.classes)(x)
 

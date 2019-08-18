@@ -264,6 +264,7 @@ class SENet(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(SENet, self).__init__(**kwargs)
@@ -276,6 +277,7 @@ class SENet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -320,6 +322,10 @@ class SENet(object):
                     data_format=self.data_format,
                     name="features/stage{}/unit{}".format(i + 1, j + 1))
                 in_channels = out_channels
+            if self.layer_index == i + 1:
+                return x
+        if self.layer_index == -2:
+            return x
         x = tf.keras.layers.AveragePooling2D(
             pool_size=7,
             strides=1,
@@ -330,6 +336,8 @@ class SENet(object):
         x = flatten(
             x=x,
             data_format=self.data_format)
+        if self.layer_index == -1:
+            return x
         x = tf.keras.layers.Dropout(
             rate=0.2,
             name="output/dropout")(

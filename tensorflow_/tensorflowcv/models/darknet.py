@@ -99,6 +99,7 @@ class DarkNet(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(DarkNet, self).__init__(**kwargs)
@@ -112,6 +113,7 @@ class DarkNet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -152,6 +154,10 @@ class DarkNet(object):
                     data_format=self.data_format,
                     name="features/pool{}".format(i + 1))
 
+            if self.layer_index == i + 1:
+                return x
+        if self.layer_index == -2:
+            return x
         x = conv2d(
             x=x,
             in_channels=in_channels,
@@ -161,6 +167,8 @@ class DarkNet(object):
             name="output/final_conv")
         if self.cls_activ:
             x = tf.nn.leaky_relu(x, alpha=self.alpha, name="output/final_activ")
+        if self.layer_index == -1:
+            return x
         x = tf.keras.layers.AveragePooling2D(
             pool_size=self.avg_pool_size,
             strides=1,

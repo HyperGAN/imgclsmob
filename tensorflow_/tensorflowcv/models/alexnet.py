@@ -186,6 +186,7 @@ class AlexNet(object):
                  in_channels=3,
                  in_size=(224, 224),
                  classes=1000,
+                 layer_index=0,
                  data_format="channels_last",
                  **kwargs):
         super(AlexNet, self).__init__(**kwargs)
@@ -199,6 +200,7 @@ class AlexNet(object):
         self.in_size = in_size
         self.classes = classes
         self.data_format = data_format
+        self.layer_index = layer_index
 
     def __call__(self,
                  x,
@@ -243,10 +245,14 @@ class AlexNet(object):
                 data_format=self.data_format,
                 name="features/stage{}/pool".format(i + 1))
 
+            if self.layer_index == i + 1:
+                return x
         in_channels = in_channels * 6 * 6
         x = flatten(
             x=x,
             data_format=self.data_format)
+        if self.layer_index == -1:
+            return x
         x = alex_output_block(
             x=x,
             in_channels=in_channels,
