@@ -313,12 +313,12 @@ def load_model(net,
     import torch
 
     if ignore_extra:
-        pretrained_state = torch.load(file_path)
+        pretrained_state = torch.load(file_path, weights_only=True)
         model_dict = net.state_dict()
         pretrained_state = {k: v for k, v in pretrained_state.items() if k in model_dict}
         net.load_state_dict(pretrained_state)
     else:
-        net.load_state_dict(torch.load(file_path))
+        net.load_state_dict(torch.load(file_path, weights_only=True))
 
 
 def _calc_width(net):
