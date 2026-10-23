@@ -218,7 +218,7 @@ def prepare_trainer(net,
         raise ValueError("Usupported optimizer: {}".format(optimizer_name))
 
     if state_file_path:
-        checkpoint = torch.load(state_file_path)
+        checkpoint = torch.load(state_file_path, weights_only=True)
         if type(checkpoint) == dict:
             optimizer.load_state_dict(checkpoint['optimizer'])
             start_epoch = checkpoint['epoch']
